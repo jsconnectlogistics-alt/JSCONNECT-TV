@@ -336,8 +336,8 @@ setTimeout(()=>{
     const s=localStorage.getItem('xt_cfg');
     if(s){cfg=JSON.parse(s);showApp();}
     else{loadSaved();document.getElementById('loginScreen').classList.add('show');}
-  },600);
-},3000);
+  },100);
+},500);
 
 function getSaved(){return JSON.parse(localStorage.getItem('xt_servers')||'[]');}
 function saveSrv(c){
