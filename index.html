@@ -328,6 +328,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 <script>
 let cfg=null,allCh=[],allCats=[],curCh=null,filterMode='all',progI,hlsInst=null;
+localStorage.removeItem('xt_cfg');
 
 setTimeout(()=>{
   document.getElementById('splash').classList.add('hide');
