@@ -469,6 +469,26 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let cfg=null,allCh=[],allCats=[],allMovies=[],allSeries=[],allRadio=[],curCh=null,filterMode='all',progI,hlsInst=null;
 
+// ===== CORS PROXY FETCH =====
+// Lista de proxies CORS públicos, se intenta en orden hasta que uno funcione
+const CORS_PROXIES=[
+  url=>url, // intento directo primero
+  url=>'https://corsproxy.io/?'+encodeURIComponent(url),
+  url=>'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+  url=>'https://cors-anywhere.herokuapp.com/'+url,
+];
+async function apiFetch(url,opts={}){
+  let lastErr;
+  for(const proxy of CORS_PROXIES){
+    try{
+      const r=await fetch(proxy(url),{...opts,signal:AbortSignal.timeout(12000)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r;
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr;
+}
+
 // ===== INIT =====
 window.addEventListener('load',()=>{
   const s=localStorage.getItem('xt_cfg');
@@ -514,7 +534,7 @@ async function doLogin(){
   if(url.endsWith('/'))url=url.slice(0,-1);
   btn.disabled=true;btn.textContent='CONECTANDO...';err.textContent='';
   try{
-    const r=await fetch(`${url}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`,{signal:AbortSignal.timeout(12000)});
+    const r=await apiFetch(`${url}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`);
     const d=await r.json();
     if(!d.user_info||d.user_info.auth===0){err.textContent='✕ Usuario o contraseña incorrectos';btn.disabled=false;btn.textContent='▶ CONECTAR';return;}
     cfg={url,u,p,ui:d.user_info};
@@ -558,8 +578,7 @@ function showApp(){
 // ===== CATEGORIES =====
 async function loadCategories(){
   try{
-    const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
-    allCats=await r.json();renderCats();
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
   }catch(e){}
 }
 function renderCats(){
@@ -575,7 +594,7 @@ function renderCats(){
 async function loadChannels(){
   document.getElementById('channelsWrap').innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div><div class="loading-text">CARGANDO CANALES...</div></div>';
   try{
-    const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_streams`);
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_streams`);
     allCh=await r.json();
     if(!Array.isArray(allCh)||!allCh.length){document.getElementById('channelsWrap').innerHTML='<div class="empty"><div class="empty-icon">📡</div><div class="empty-title">SIN CANALES</div><div class="empty-desc">No hay canales disponibles.</div></div>';return;}
     document.getElementById('liveBadge').textContent=allCh.length;
@@ -592,7 +611,7 @@ async function loadChannels(){
 async function loadMovies(){
   document.getElementById('moviesWrap').innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div><div class="loading-text">CARGANDO PELÍCULAS...</div></div>';
   try{
-    const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_vod_streams`);
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_vod_streams`);
     allMovies=await r.json();
     if(!Array.isArray(allMovies)||!allMovies.length){
       document.getElementById('moviesWrap').innerHTML='<div class="empty"><div class="empty-icon">🎬</div><div class="empty-title">SIN PELÍCULAS</div><div class="empty-desc">No hay películas disponibles en este servidor.</div></div>';return;
@@ -636,7 +655,7 @@ function filterMovies(){
 async function loadSeries(){
   document.getElementById('seriesWrap').innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div><div class="loading-text">CARGANDO SERIES...</div></div>';
   try{
-    const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_series`);
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_series`);
     allSeries=await r.json();
     if(!Array.isArray(allSeries)||!allSeries.length){
       document.getElementById('seriesWrap').innerHTML='<div class="empty"><div class="empty-icon">🎭</div><div class="empty-title">SIN SERIES</div><div class="empty-desc">No hay series disponibles en este servidor.</div></div>';return;
@@ -687,7 +706,7 @@ async function openSeries(seriesId){
   document.getElementById('modalSeasons').innerHTML='<div class="loading-wrap"><div class="loading-spinner"></div><div class="loading-text">CARGANDO TEMPORADAS...</div></div>';
   modal.classList.add('open');
   try{
-    const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_series_info&series_id=${seriesId}`);
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_series_info&series_id=${seriesId}`);
     const d=await r.json();
     renderSeasons(d.episodes||{});
   }catch(e){
@@ -749,12 +768,12 @@ async function loadRadio(){
     // First try dedicated radio endpoint, then fall back to filtering live streams
     let radioStreams=[];
     try{
-      const r=await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
+      const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
       const cats=await r.json();
       const radioCats=cats.filter(c=>/radio|fm|am|musica|music/i.test(c.category_name));
       if(radioCats.length>0){
         // Load streams from radio categories
-        const allLive=allCh.length>0?allCh:(await (await fetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_streams`)).json());
+        const allLive=allCh.length>0?allCh:(await (await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_streams`)).json());
         const radioCatIds=radioCats.map(c=>c.category_id);
         radioStreams=allLive.filter(s=>radioCatIds.includes(s.category_id));
       }
