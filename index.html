@@ -331,14 +331,14 @@ let cfg=null,allCh=[],allCats=[],curCh=null,filterMode='all',progI,hlsInst=null;
 localStorage.removeItem('xt_cfg');
 
 setTimeout(()=>{
-  document.getElementById('splash').classList.add('hide');
+  document.getElementById('splash').style.display='none';
   setTimeout(()=>{
     document.getElementById('splash').style.display='none';
     const s=localStorage.getItem('xt_cfg');
     if(s){cfg=JSON.parse(s);showApp();}
     else{loadSaved();document.getElementById('loginScreen').classList.add('show');}
-  },100);
-},500);
+  },50);
+},100);
 
 function getSaved(){return JSON.parse(localStorage.getItem('xt_servers')||'[]');}
 function saveSrv(c){
