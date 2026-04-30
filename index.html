@@ -469,8 +469,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let cfg=null,allCh=[],allCats=[],allMovies=[],allSeries=[],allRadio=[],curCh=null,filterMode='all',progI,hlsInst=null;
 
-// ===== FETCH DIRECTO (sin proxy) =====
-async function apiFetch(url,opts={}){
+// ===== FETCH CON PROXY RAILWAY =====
+const PROXY = 'https://jsconnect-tv-production.up.railway.app/proxy?url=';
+async function apiFetch(url, opts={}) {
+  const proxied = url.startsWith('http://') ? PROXY+encodeURIComponent(url) : url;
+  return await fetch(proxied, {...opts, signal:AbortSignal.timeout(15000)});
+}){
   return await fetch(url,{...opts,signal:AbortSignal.timeout(15000)});
 }
 
