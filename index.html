@@ -842,9 +842,7 @@ function getIcon(c){
 function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return h;}
 function getCatName(id){const c=allCats.find(x=>x.category_id==id);return c?c.category_name:'General';}
 function forceHttps(url){if(!url)return url;return url.replace(/^http:\/\//i,'https://');}
-function getStreamUrl(c){
-  if(c.direct_source)return c.direct_source;
-  return`${cfg.url}/live/${encodeURIComponent(cfg.u)}/${encodeURIComponent(cfg.p)}/${c.stream_id}.m3u8`;
+function getStreamUrl(c){const SPROXY='https://jsconnect-tv-production.up.railway.app/proxy?url=';if(c.direct_source){const ds=c.direct_source;return ds.startsWith('http://')?SPROXY+encodeURIComponent(ds):ds;}const su=`${cfg.url}/live/${encodeURIComponent(cfg.u)}/${encodeURIComponent(cfg.p)}/${c.stream_id}.m3u8`;return su.startsWith('http://')?SPROXY+encodeURIComponent(su):su;}/live/${encodeURIComponent(cfg.u)}/${encodeURIComponent(cfg.p)}/${c.stream_id}.m3u8`;
 }
 
 // ===== VOD PLAYBACK =====
