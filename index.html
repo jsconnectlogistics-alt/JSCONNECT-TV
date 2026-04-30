@@ -952,8 +952,8 @@ function playStream(url){
       // Fallback: HLS.js sin forzar HTTPS
       if(Hls.isSupported()){
         hlsInst=new Hls({
-          enableWorker:false,
-          lowLatencyMode:true,
+          enableWorker:true,
+          lowLatencyMode:true,maxBufferLength:10,maxMaxBufferLength:30,maxBufferSize:20,startLevel:-1,
           backBufferLength:90,
           xhrSetup:function(xhr){xhr.withCredentials=false;}
         });
