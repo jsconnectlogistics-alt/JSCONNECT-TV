@@ -573,7 +573,7 @@ function showApp(){
 // ===== CATEGORIES =====
 async function loadCategories(){
   try{
-    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
+    const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);allCats=await r.json();renderCats();if(allCh.length)renderCh(allCh);
   }catch(e){}
 }
 function renderCats(){
@@ -763,7 +763,7 @@ async function loadRadio(){
     // First try dedicated radio endpoint, then fall back to filtering live streams
     let radioStreams=[];
     try{
-      const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);
+      const r=await apiFetch(`${cfg.url}/player_api.php?username=${encodeURIComponent(cfg.u)}&password=${encodeURIComponent(cfg.p)}&action=get_live_categories`);allCats=await r.json();renderCats();if(allCh.length)renderCh(allCh);
       const cats=await r.json();
       const radioCats=cats.filter(c=>/radio|fm|am|musica|music/i.test(c.category_name));
       if(radioCats.length>0){
