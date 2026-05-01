@@ -287,6 +287,31 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .bottom-nav-item.active,.bottom-nav-item:active{color:var(--neon);}
 .bottom-nav-item span:first-child{font-size:20px;}
 .app-wrap{padding-bottom:70px;}
+
+@media(min-width:1200px){
+  .bottom-nav{display:none!important;}
+  .sidebar{display:flex!important;}
+  .main-content{margin-left:var(--nav-w)!important;}
+  .netflix-scroll .chcard{min-width:200px;}
+  .netflix-scroll .vodcard{min-width:180px;}
+  .netflix-row-title{font-size:20px;}
+  .chcard{min-height:180px;}
+  .vodcard{min-height:220px;}
+  .vodposter{height:200px;}
+  .chic{font-size:48px;}
+  .netflix-scroll{gap:16px;}
+  .netflix-row{margin-bottom:40px;}
+  .page{padding:24px 32px;}
+}
+@media(min-width:1920px){
+  .netflix-scroll .chcard{min-width:240px;}
+  .netflix-scroll .vodcard{min-width:210px;}
+  .chcard{min-height:220px;}
+  .vodcard{min-height:260px;}
+  .vodposter{height:240px;}
+  .netflix-row-title{font-size:24px;}
+  .page{padding:32px 48px;}
+}
 </style>
 </head>
 <body>
