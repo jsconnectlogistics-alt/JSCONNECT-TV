@@ -622,7 +622,7 @@ async function loadMovies(){
 
 function renderMovies(list){
   if(!list.length){document.getElementById('moviesWrap').innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">SIN RESULTADOS</div></div>';return;}
-  document.getElementById('moviesWrap').innerHTML='<div class="vodgrid">'+list.map((m,i)=>movieCard(m,i)).join('')+'</div>';
+  const mcats={};list.forEach((m,i)=>{const cn=m.category_name||'General';if(!mcats[cn])mcats[cn]=[];mcats[cn].push({m,i});});let mhtml='';Object.keys(mcats).forEach(cn=>{mhtml+=`<div class="netflix-row"><div class="netflix-row-title"><span class="row-title-bar"></span>${cn}</div><div class="netflix-scroll">${mcats[cn].map(({m,i})=>movieCard(m,i)).join('')}</div></div>`;});document.getElementById('moviesWrap').innerHTML=mhtml;
 }
 
 function movieCard(m,i){
@@ -666,7 +666,7 @@ async function loadSeries(){
 
 function renderSeriesGrid(list){
   if(!list.length){document.getElementById('seriesWrap').innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">SIN RESULTADOS</div></div>';return;}
-  document.getElementById('seriesWrap').innerHTML='<div class="vodgrid">'+list.map((s,i)=>seriesCard(s,i)).join('')+'</div>';
+  const scats={};list.forEach((s,i)=>{const cn=s.category_name||'General';if(!scats[cn])scats[cn]=[];scats[cn].push({s,i});});let shtml='';Object.keys(scats).forEach(cn=>{shtml+=`<div class="netflix-row"><div class="netflix-row-title"><span class="row-title-bar"></span>${cn}</div><div class="netflix-scroll">${scats[cn].map(({s,i})=>seriesCard(s,i)).join('')}</div></div>`;});document.getElementById('seriesWrap').innerHTML=shtml;
 }
 
 function seriesCard(s,i){
