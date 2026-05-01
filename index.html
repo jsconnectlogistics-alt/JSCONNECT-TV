@@ -9,7 +9,13 @@
 <meta name="apple-mobile-web-app-title" content="JS Connect TV">
 <title>JS CONNECT TV</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest">
+function setBottomNav(id){
+  document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el)el.classList.add('active');
+}
+</script>
 <style>
 :root{
   --bg:#000814;--bg2:#000d1a;--surface:#001428;--card:#001e3c;
@@ -270,6 +276,17 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .netflix-scroll::-webkit-scrollbar{height:4px;}
 .netflix-scroll::-webkit-scrollbar-thumb{background:var(--neon);border-radius:2px;}
 .netflix-scroll .chcard{min-width:clamp(130px,15vw,190px);scroll-snap-align:start;flex-shrink:0;}
+
+@media(max-width:768px){
+  .sidebar{display:none!important;}
+  .main-content{margin-left:0!important;}
+  .bottom-nav{display:flex!important;}
+}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#000d1a;border-top:1px solid var(--border);z-index:50;justify-content:space-around;align-items:center;padding:8px 0 12px;}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10px;cursor:pointer;padding:4px 12px;border-radius:8px;transition:all .2s;}
+.bottom-nav-item.active,.bottom-nav-item:active{color:var(--neon);}
+.bottom-nav-item span:first-child{font-size:20px;}
+.app-wrap{padding-bottom:70px;}
 </style>
 </head>
 <body>
@@ -1019,5 +1036,23 @@ function toast(msg,type=''){
   t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
 }
 </script>
+
+<div class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-item active" id="bn-home" onclick="go('home',document.querySelector('.ni'));setBottomNav('bn-home')">
+    <span>📺</span><span>Canales</span>
+  </div>
+  <div class="bottom-nav-item" id="bn-movies" onclick="go('movies',document.querySelectorAll('.ni')[1]);setBottomNav('bn-movies')">
+    <span>🎬</span><span>Películas</span>
+  </div>
+  <div class="bottom-nav-item" id="bn-series" onclick="go('series',document.querySelectorAll('.ni')[2]);setBottomNav('bn-series')">
+    <span>🎭</span><span>Series</span>
+  </div>
+  <div class="bottom-nav-item" id="bn-radio" onclick="go('radio',document.querySelectorAll('.ni')[3]);setBottomNav('bn-radio')">
+    <span>📻</span><span>Radio</span>
+  </div>
+  <div class="bottom-nav-item" id="bn-player" onclick="go('player',document.querySelectorAll('.ni')[4]);setBottomNav('bn-player')">
+    <span>▶</span><span>Player</span>
+  </div>
+</div>
 </body>
 </html>
