@@ -2,8 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const https = require('https');
 const http = require('http');
+const path = require('path');
 const app = express();
 app.use(cors());
+app.use(express.static(path.join(__dirname)));
 const BASE_URL = 'https://jsconnect-tv-production.up.railway.app';
 function fetchUrl(url, res, redirectCount) {
   if (!redirectCount) redirectCount = 0;
@@ -42,5 +44,5 @@ function fetchUrl(url, res, redirectCount) {
 }
 app.options('*', (req,res) => { res.setHeader('Access-Control-Allow-Origin','*'); res.setHeader('Access-Control-Allow-Headers','*'); res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS'); res.sendStatus(200); });
 app.get('/proxy', (req,res) => { const url = req.query.url; if (!url) return res.status(400).send('URL requerida'); fetchUrl(decodeURIComponent(url),res); });
-app.get('/', (req,res) => res.send('JS Connect TV Proxy OK'));
-app.listen(process.env.PORT||3000, () => console.log('Proxy OK'));
+app.get('/', (req,res) => res.sendFile(path.join(__dirname,'index.html')));
+app.listen(process.env.PORT||3000, () => console.log('JS Connect TV OK'));
