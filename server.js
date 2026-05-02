@@ -6,50 +6,88 @@ const http = require('http');
 const app = express();
 app.use(cors());
 
-app.get('/proxy', (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).send('URL requerida');
+function fetchUrl(url, res, redirectCount = 0) {
+  if (redirectCount > 5) return res.status(500).send('Demasiadas redirecciones');
 
   const lib = url.startsWith('https') ? https : http;
-
   const options = {
     headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': '*/*'
-    }
+      'User-Agent': 'Mozilla/5.0 (SmartTV) AppleWebKit/537.36',
+      'Accept': '*/*',
+      'Connection': 'keep-alive'
+    },
+    timeout: 30000
   };
 
-  lib.get(url, options, (proxyRes) => {
+  const request = lib.get(url, options, (proxyRes) => {
+    // Manejar redirecciones
+    if ([301,302,303,307,308].includes(proxyRes.statusCode)) {
+      const location = proxyRes.headers['location'];
+      if (location) {
+        const newUrl = location.startsWith('http') ? location : new URL(location, url).toString();
+        return fetchUrl(newUrl, res, redirectCount + 1);
+      }
+    }
+
     const contentType = proxyRes.headers['content-type'] || '';
-    const isM3U8 = url.includes('.m3u8') || contentType.includes('mpegurl');
+    const isM3U8 = url.includes('.m3u8') || url.includes('.m3u') ||
+                   contentType.includes('mpegurl') || contentType.includes('x-mpegurl');
+    const isTS = url.includes('.ts') || contentType.includes('video/mp2t');
 
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    res.setHeader('Cache-Control', 'no-cache');
 
     if (isM3U8) {
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
       let body = '';
       proxyRes.on('data', chunk => body += chunk.toString());
       proxyRes.on('end', () => {
-        const base = new URL(url);
-        const rewritten = body.split('\n').map(line => {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith('#')) return line;
-          try {
-            const abs = new URL(trimmed, base).toString();
-            return `/proxy?url=${encodeURIComponent(abs)}`;
-          } catch {
-            return line;
-          }
-        }).join('\n');
-        res.send(rewritten);
+        try {
+          const base = new URL(url);
+          const rewritten = body.split('\n').map(line => {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) return line;
+            try {
+              const abs = new URL(trimmed, base).toString();
+              return `/proxy?url=${encodeURIComponent(abs)}`;
+            } catch { return line; }
+          }).join('\n');
+          res.send(rewritten);
+        } catch(e) {
+          res.send(body);
+        }
       });
+    } else if (isTS) {
+      res.setHeader('Content-Type', 'video/mp2t');
+      proxyRes.pipe(res);
     } else {
       res.setHeader('Content-Type', contentType || 'application/octet-stream');
       proxyRes.pipe(res);
     }
-  }).on('error', (e) => {
-    res.status(500).send('Error: ' + e.message);
   });
+
+  request.on('error', (e) => {
+    if (!res.headersSent) res.status(500).send('Error: ' + e.message);
+  });
+
+  request.on('timeout', () => {
+    request.destroy();
+    if (!res.headersSent) res.status(504).send('Timeout');
+  });
+}
+
+app.get('/proxy', (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send('URL requerida');
+  fetchUrl(decodeURIComponent(url), res);
+});
+
+app.options('/proxy', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.sendStatus(200);
 });
 
 app.get('/', (req, res) => res.send('JS Connect TV Proxy OK'));
