@@ -5,7 +5,7 @@ const http = require('http');
 const path = require('path');
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname)));
+
 const BASE_URL = 'https://jsconnect-tv-production.up.railway.app';
 function fetchUrl(url, res, redirectCount) {
   if (!redirectCount) redirectCount = 0;
