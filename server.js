@@ -6,9 +6,12 @@ const http = require('http');
 const app = express();
 app.use(cors());
 
+const BASE_URL = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : 'https://jsconnect-tv-production.up.railway.app';
+
 function fetchUrl(url, res, redirectCount = 0) {
   if (redirectCount > 5) return res.status(500).send('Demasiadas redirecciones');
-
   const lib = url.startsWith('https') ? https : http;
   const options = {
     headers: {
@@ -20,7 +23,6 @@ function fetchUrl(url, res, redirectCount = 0) {
   };
 
   const request = lib.get(url, options, (proxyRes) => {
-    // Manejar redirecciones
     if ([301,302,303,307,308].includes(proxyRes.statusCode)) {
       const location = proxyRes.headers['location'];
       if (location) {
@@ -32,7 +34,6 @@ function fetchUrl(url, res, redirectCount = 0) {
     const contentType = proxyRes.headers['content-type'] || '';
     const isM3U8 = url.includes('.m3u8') || url.includes('.m3u') ||
                    contentType.includes('mpegurl') || contentType.includes('x-mpegurl');
-    const isTS = url.includes('.ts') || contentType.includes('video/mp2t');
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -50,17 +51,12 @@ function fetchUrl(url, res, redirectCount = 0) {
             if (!trimmed || trimmed.startsWith('#')) return line;
             try {
               const abs = new URL(trimmed, base).toString();
-              return `/proxy?url=${encodeURIComponent(abs)}`;
+              return `${BASE_URL}/proxy?url=${encodeURIComponent(abs)}`;
             } catch { return line; }
           }).join('\n');
           res.send(rewritten);
-        } catch(e) {
-          res.send(body);
-        }
+        } catch(e) { res.send(body); }
       });
-    } else if (isTS) {
-      res.setHeader('Content-Type', 'video/mp2t');
-      proxyRes.pipe(res);
     } else {
       res.setHeader('Content-Type', contentType || 'application/octet-stream');
       proxyRes.pipe(res);
@@ -70,7 +66,6 @@ function fetchUrl(url, res, redirectCount = 0) {
   request.on('error', (e) => {
     if (!res.headersSent) res.status(500).send('Error: ' + e.message);
   });
-
   request.on('timeout', () => {
     request.destroy();
     if (!res.headersSent) res.status(504).send('Timeout');
@@ -83,7 +78,7 @@ app.get('/proxy', (req, res) => {
   fetchUrl(decodeURIComponent(url), res);
 });
 
-app.options('/proxy', (req, res) => {
+app.options('*', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -93,4 +88,4 @@ app.options('/proxy', (req, res) => {
 app.get('/', (req, res) => res.send('JS Connect TV Proxy OK'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Proxy corriendo en puerto ' + PORT));
+app.listen(PORT, () => console.log(`Proxy en puerto ${PORT} - BASE: ${BASE_URL}`));
